@@ -7,16 +7,37 @@ const { strict } = require('assert');
 const app = express();
 const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
+const methodOverride = require('method-override');
+const gamesRouter = require('./routes/games');
+const {engine} = require('express-handlebars');
+
+//setup the templating engine
+app.engine('hbs', engine({ 
+  extname: '.hbs',
+  layoutsDir: path.join(__dirname, 'views/layouts'),
+  defaultLayout: 'main'
+}));
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));
+
 
 if (!mongoURI) {
   console.error('MONGO_URI is not defined in environment variables.');
   process.exit(1);
 }
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 app.use(express.json());
+app.use(methodOverride('_method'));
+app.use(express.urlencoded({ extended: true }));
+
+//set up router - must come BEFORE static files to take priority
+app.use('/', gamesRouter);
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 async function connectToMongo() {
   try {
@@ -28,15 +49,15 @@ async function connectToMongo() {
   }
 }
 
-//Basic get route
-app.get('/index', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  console.log('Index page accessed');
-});
+// //Basic get route
+// app.get('/index', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+//   console.log('Index page accessed');
+// });
 
-app.get('/secondpage', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'secondpage.html'));
-});
+// app.get('/secondpage', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'secondpage.html'));
+// });
 
 //Routes for data and data files
 //json API route
@@ -62,23 +83,24 @@ app.get('/api/course', (req, res) => {
 
 ////Routes connected to MongoDB can be added here////
 
-const videogames = new mongoose.Schema({}, { strict: false});
-const Games = mongoose.model('videogames', videogames);
-app.get("/api/games",  async (req, res) => {
-  const data = await Games.find({});
-  console.log(data);
-  res.json(data);
-});
+  // const videogames = new mongoose.Schema({}, { strict: false});
+  // const Games = mongoose.model('videogames', videogames);
+  // app.get("/api/games",  async (req, res) => {
+  //   const data = await Games.find({});
+  //   console.log(data);
+  //   res.json(data);
+  // });
 
-app.get("/api/games/:game",  async (req, res) => {
-  console.log(req.params.game);
-  const ginfo = req.params.game;
-  const gameInfo = await Games.findOne({game: ginfo});
-  res.json(gameInfo);
-});
+// app.get("/api/games/:game",  async (req, res) => {
+//   console.log(req.params.game);
+//   const ginfo = req.params.game;
+//   const gameInfo = await Games.findOne({game: ginfo});
+//   res.json(gameInfo);
+// });
 
 connectToMongo().then(() => {
   app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
   });
 }); 
+
