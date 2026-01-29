@@ -59,11 +59,10 @@ ul{
 .container{
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 20px;
 }
+
 
 .card{
     background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
@@ -71,7 +70,7 @@ ul{
     border: 1px solid #475569;
     border-radius: 12px;
     padding: 25px;
-    margin: 15px;
+    margin: 15px auto;
     width: 600px;
     max-width: 90%;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
@@ -90,8 +89,10 @@ label{
 }
 
 input{
-    margin: 8px 0;
-    width: 100%;
+    margin-top:10px;
+    margin-right:20px;
+    margin-bottom: 20px;
+    width: 95%;
     padding: 10px;
     border: 1px solid #475569;
     border-radius: 6px;

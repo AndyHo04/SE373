@@ -10,12 +10,19 @@ const mongoURI = process.env.MONGO_URI;
 const methodOverride = require('method-override');
 const gamesRouter = require('./routes/games');
 const {engine} = require('express-handlebars');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const passport = require('passport');
 
 //setup the templating engine
 app.engine('hbs', engine({ 
   extname: '.hbs',
   layoutsDir: path.join(__dirname, 'views/layouts'),
-  defaultLayout: 'main'
+  defaultLayout: 'main',
+  runtimeOptions: {
+    allowProtoPropertiesByDefault: true,
+    allowProtoMethodsByDefault: true
+  }
 }));
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
@@ -27,17 +34,9 @@ if (!mongoURI) {
 }
 
 
-
-
 app.use(express.json());
 app.use(methodOverride('_method'));
 app.use(express.urlencoded({ extended: true }));
-
-//set up router - must come BEFORE static files to take priority
-app.use('/', gamesRouter);
-
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
 
 async function connectToMongo() {
   try {
@@ -48,6 +47,41 @@ async function connectToMongo() {
     process.exit(1);
   }
 }
+
+//setup passport authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    dbName: 'Games'
+  }),
+  cookie: { httpOnly: true }
+})
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
+  next();
+});
+
+require('./auth/passport');
+
+// Serve CSS files BEFORE routes 
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+
+const authRouter = require('./routes/auth');
+app.use('/', authRouter);
+
+//set up router - must come AFTER passport initialization
+app.use('/', gamesRouter);
+
+// Serve other static files from the public directory (AFTER routers so routes take priority)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // //Basic get route
 // app.get('/index', (req, res) => {
