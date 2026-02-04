@@ -138,3 +138,7 @@ connectToMongo().then(() => {
   });
 }); 
 
+app.use((req, res) => {
+  res.status(404).redirect('/login');
+});
+
